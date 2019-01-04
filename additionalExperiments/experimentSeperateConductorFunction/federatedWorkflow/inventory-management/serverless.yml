@@ -1,0 +1,55 @@
+service:
+  name: inventory-management
+
+# Add the serverless-webpack plugin
+plugins:
+  - serverless-webpack
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  versionFunctions: false
+  # overwrite defaults here
+  stage: ${opt:stage, 'dev'}
+  region: us-east-1
+  memorySize: 256
+
+  # add statements to the Lambda function's IAM Role
+  iamRoleStatements:
+  # allows lambda functions to directly invoke other lambda functions
+    - Effect: "Allow"
+      Action:
+        - "lambda:InvokeFunction"
+        - "lambda:InvokeAsync"
+      Resource: { "Fn::Join" : ["", ["arn:aws:lambda:*" ] ]  }
+
+
+# define service wide environment variables
+  environment:
+    checkInventoryFunctionName: ${self:service.name}-${self:provider.stage}-checkInventoryHandler
+    createPicklistFunctionName: ${self:service.name}-${self:provider.stage}-createPicklistHandler
+    decreaseStockFunctionName: ${self:service.name}-${self:provider.stage}-decreaseStockHandler
+    getProductLocationsFunctionName: ${self:service.name}-${self:provider.stage}-getProductLocationsHandler
+    startOrderInventoryFunctionName: ${self:service.name}-${self:provider.stage}-startOrderInventoryProcess
+
+functions:
+  checkInventoryHandler:
+    handler: checkInventoryHandler.checkInventory
+    name: ${self:provider.environment.checkInventoryFunctionName}
+  createPicklistHandler:
+    handler: createPicklistHandler.hello
+    name: ${self:provider.environment.createPicklistFunctionName}
+  decreaseStockHandler:
+    handler: decreaseStockHandler.hello
+    name: ${self:provider.environment.decreaseStockFunctionName}
+  getProductLocationsHandler:
+    handler: getProductLocationsHandler.hello
+    name: ${self:provider.environment.getProductLocationsFunctionName}
+  startOrderInventoryProcess:
+    handler: orderInventoryProcess.startOrderInventoryWorkflow
+    name: ${self:provider.environment.startOrderInventoryFunctionName}
+    events:
+          - http:
+              method: post
+              path: ${self:service}/api/startOrderInventoryProcess
+              cors: true

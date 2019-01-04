@@ -1,0 +1,103 @@
+service: order-management
+
+# Add the serverless-openwhisk plugin
+# https://github.com/serverless/plugins
+plugins:
+  - serverless-openwhisk
+
+# Please ensure the serverless-openwhisk provider plugin is installed globally.
+# $ npm install -g serverless-openwhisk
+# ...before installing project dependencies to register this provider.
+# $ npm install
+provider:
+  name: openwhisk
+  # By default, the framework creates function versions for every deploy. This behavior
+  # is optional, and can be turned off in cases where you don't invoke past versions by their qualifier
+  versionFunctions: false
+  stage: ${opt:stage, 'dev'}
+
+# you can add packaging information here
+#package:
+#  include:
+#    - include-me.js
+#    - include-me-dir/**
+#  exclude:
+#    - exclude-me.js
+#    - exclude-me-dir/**
+
+# define service wide environment variables
+# OpenWhisk does not support using environment variables to pass
+# custom parameters into the actions. Instead, of using environment variables, you can use default parameters on actions.
+# Default parameters can be defined when you create or update an action. The platform stores these parameters internally
+# and automatically includes them in the invocations parameters.
+  environment:
+    checkPaymentActionName: ${self:service.name}-${self:provider.stage}-checkPaymentAction
+    createPaymentRecieptActionName: ${self:service.name}-${self:provider.stage}-createPaymentRecieptAction
+    persistOrderActionName: ${self:service.name}-${self:provider.stage}-persistOrderAction
+    sendCancelationMailActionName: ${self:service.name}-${self:provider.stage}-sendCancelationMailAction
+    sendConfirmationMailActionName: ${self:service.name}-${self:provider.stage}-sendConfirmationMailAction
+    processOrderActionName: ${self:service.name}-${self:provider.stage}-processOrderAction
+
+functions:
+  checkPaymentAction:
+    handler: checkPayment.hello
+    name: ${self:provider.environment.checkPaymentActionName}
+    parameters:
+      ENVIRONMENT: ${self:provider.environment}
+  createPaymentRecieptAction:
+    handler: createPaymentReciept.hello
+    name: ${self:provider.environment.createPaymentRecieptActionName}
+    parameters:
+          ENVIRONMENT: ${self:provider.environment}
+  persistOrderAction:
+    handler: persistOrder.hello
+    name: ${self:provider.environment.persistOrderActionName}
+    parameters:
+          ENVIRONMENT: ${self:provider.environment}
+  sendCancelationMailAction:
+    handler: sendCancelationMail.hello
+    name: ${self:provider.environment.sendCancelationMailActionName}
+    parameters:
+          ENVIRONMENT: ${self:provider.environment}
+  sendConfirmationMailAction:
+    handler: sendConfirmationMail.hello
+    name: ${self:provider.environment.sendConfirmationMailActionName}
+    parameters:
+          ENVIRONMENT: ${self:provider.environment}
+  processOrderProcess:
+    handler: processOrder.startOrderWorkflow
+    name: ${self:provider.environment.processOrderActionName}
+    events: # All events associated with this function
+          - http: POST /startOrderProcess
+    parameters:
+          ENVIRONMENT: ${self:provider.environment}
+
+#    Functions can be defined using sequences rather than referring 
+#    to a handler.
+#    sequence:
+#      - parse_input
+#      - do_some_algorithm
+#      - construct_output
+
+#    The following are a few example events you can configure
+#    Check the event documentation for details
+#    events:
+#      - http: GET /api/users/create
+#      - trigger: trigger_name
+
+
+
+
+# you can define custom triggers and trigger feeds using the resources section.
+#
+#resources:
+#  triggers:
+#    my_trigger:
+#      parameters: 
+#        hello: world    
+#    alarm_trigger:
+#      parameters: 
+#        hello: world
+#     feed: /whisk.system/alarms/alarm
+#     feed_parameters: 
+#       cron: '*/8 * * * * *'
